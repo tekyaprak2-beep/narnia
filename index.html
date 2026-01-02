@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Naz & Buzlar</title>
+<title>Naz Buzdan Geçiyor</title>
 
 <style>
 html, body {
@@ -21,26 +21,36 @@ html, body {
   height: 100vh;
 }
 
-#naz {
+.player {
   position: absolute;
-  width: 40px;
-  height: 40px;
-  background: pink;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  left: 50px;
-  bottom: 120px;
   text-align: center;
-  line-height: 40px;
+  line-height: 42px;
   font-size: 14px;
+  font-weight: bold;
+}
+
+#naz {
+  background: pink;
+  left: 60px;
+  bottom: 140px;
+}
+
+#sen {
+  background: lightblue;
+  right: 60px;
+  bottom: 140px;
 }
 
 .ice {
   position: absolute;
-  width: 80px;
-  height: 20px;
+  width: 90px;
+  height: 22px;
   background: #e0f7fa;
-  border-radius: 10px;
-  bottom: 80px;
+  border-radius: 12px;
+  bottom: 100px;
 }
 
 #hud {
@@ -49,90 +59,85 @@ html, body {
   left: 10px;
   font-size: 22px;
 }
+
+#msg {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  color: #c2185b;
+}
 </style>
 </head>
 
 <body>
 <div id="game">
   <div id="hud">❤️❤️❤️</div>
-  <div id="naz">Naz</div>
+  <div id="msg">Dokun → Naz bir sonraki buza atlasın</div>
+  <div id="naz" class="player">Naz</div>
+  <div id="sen" class="player">Sen</div>
 </div>
 
 <script>
 const game = document.getElementById("game");
 const naz = document.getElementById("naz");
 const hud = document.getElementById("hud");
+const msg = document.getElementById("msg");
 
-let y = 120;
-let vy = 0;
-let gravity = 1.2;
-let jumping = false;
 let lives = 3;
-let iceBlocks = [];
+let step = 0;
 
-function createIce() {
+// BUZ YOLU (ulaşılabilir mesafeler)
+const icePositions = [140, 260, 380, 500, 620];
+const ices = [];
+
+icePositions.forEach(x => {
   const ice = document.createElement("div");
   ice.className = "ice";
-  ice.style.left = window.innerWidth + "px";
+  ice.style.left = x + "px";
   game.appendChild(ice);
-  iceBlocks.push(ice);
-}
+  ices.push(ice);
+});
 
-setInterval(createIce, 1600);
+function moveNaz() {
+  // Kazandıysa
+  if (step === icePositions.length) return;
 
-function gameLoop() {
-  vy -= gravity;
-  y += vy;
-
-  let onIce = false;
-
-  iceBlocks.forEach((ice, i) => {
-    ice.style.left = (ice.offsetLeft - 3) + "px";
-
-    if (
-      ice.offsetLeft < 90 &&
-      ice.offsetLeft + 80 > 50 &&
-      y <= 100 &&
-      y >= 80 &&
-      vy <= 0
-    ) {
-      onIce = true;
-      vy = 0;
-      y = 100;
-    }
-
-    if (ice.offsetLeft < -100) {
-      ice.remove();
-      iceBlocks.splice(i, 1);
-    }
-  });
-
-  if (!onIce && y < 60) {
-    lives--;
-    hud.innerText = "❤️".repeat(lives);
-    y = 120;
-    vy = 0;
-
-    if (lives <= 0) {
-      alert("Naz buzlara düştü ❄️");
-      location.reload();
-    }
+  // %20 ihtimalle düşsün (oyun hissi için)
+  if (Math.random() < 0.2) {
+    loseLife();
+    return;
   }
 
-  naz.style.bottom = y + "px";
-  requestAnimationFrame(gameLoop);
+  step++;
+
+  // Son adım → senin yanın
+  if (step === icePositions.length) {
+    naz.style.left = (window.innerWidth - 140) + "px";
+    msg.innerText = "Naz bana ulaştı ❤️";
+    return;
+  }
+
+  naz.style.left = icePositions[step] + "px";
+}
+
+function loseLife() {
+  lives--;
+  hud.innerText = "❤️".repeat(lives);
+  msg.innerText = "Düşsen bile kalbim seni tutar ❤️";
+
+  if (lives <= 0) {
+    msg.innerText = "Aşk kazandı ama Naz üşüdü ❄️❤️";
+  }
 }
 
 game.addEventListener("touchstart", function(e) {
   e.preventDefault();
-  if (vy === 0) vy = 18;
+  moveNaz();
 }, { passive: false });
 
-game.addEventListener("mousedown", () => {
-  if (vy === 0) vy = 18;
-});
-
-gameLoop();
+game.addEventListener("mousedown", moveNaz);
 </script>
 </body>
 </html>
