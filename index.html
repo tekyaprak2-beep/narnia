@@ -36,7 +36,7 @@ html, body {
   background: pink;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 120px;
+  bottom: 80px;
 }
 
 #sen {
@@ -87,14 +87,15 @@ const levelText = document.getElementById("level");
 let lives = 3;
 let level = 1;
 
-let y = 120;
+let y = 80;
 let velocity = 0;
-let gravity = 0.9;
+let gravity = 0.7;
 
-let iceSpeed = 1.5;
-let iceInterval = 1600;
+let iceSpeed = 1.2;
+let iceInterval = 1400;
 
 let ices = [];
+let gameStarted = false; // 🔴 KRİTİK
 
 function createIce() {
   const ice = document.createElement("div");
@@ -103,6 +104,7 @@ function createIce() {
   ice.style.top = "-20px";
   game.appendChild(ice);
   ices.push(ice);
+  gameStarted = true; // en az 1 buz geldi
 }
 
 let iceTimer = setInterval(createIce, iceInterval);
@@ -114,8 +116,8 @@ function nextLevel() {
     location.reload();
   }
   levelText.innerText = "Bölüm " + level;
-  iceSpeed += 0.8;
-  iceInterval -= 400;
+  iceSpeed += 0.6;
+  iceInterval -= 300;
   clearInterval(iceTimer);
   iceTimer = setInterval(createIce, iceInterval);
 }
@@ -142,7 +144,7 @@ function loop() {
       velocity = 0;
       y = window.innerHeight - ice.offsetTop - 18;
       progress++;
-      if (progress % 8 === 0) nextLevel();
+      if (progress % 6 === 0) nextLevel();
     }
 
     if (ice.offsetTop > window.innerHeight) {
@@ -151,11 +153,13 @@ function loop() {
     }
   });
 
-  if (!onIce && y < 40) {
+  // 🔴 ÖLÜM KONTROLÜ ARTIK GÜVENLİ
+  if (gameStarted && !onIce && y < 20) {
     lives--;
     hud.innerText = "❤️".repeat(lives);
-    y = 120;
+    y = 80;
     velocity = 0;
+
     if (lives <= 0) {
       alert("Naz buzlara düştü ❄️");
       location.reload();
@@ -168,11 +172,11 @@ function loop() {
 
 game.addEventListener("touchstart", function(e) {
   e.preventDefault();
-  if (velocity === 0) velocity = 18;
+  if (velocity === 0) velocity = 16;
 }, { passive: false });
 
 game.addEventListener("mousedown", () => {
-  if (velocity === 0) velocity = 18;
+  if (velocity === 0) velocity = 16;
 });
 
 loop();
