@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Narnia – Naz’ın Buz Yolu</title>
+
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  background: url("https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+  font-family: Arial, sans-serif;
+}
+
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+#player {
+  position: absolute;
+  font-size: 40px;
+  left: 40px;
+  bottom: 120px;
+}
+
+#emre {
+  position: absolute;
+  font-size: 40px;
+  right: 20px;
+  bottom: 110px;
+}
+
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 22px;
+  color: white;
+}
+
+#controls {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+}
+
+.btn {
+  background: rgba(255,255,255,0.7);
+  padding: 15px 25px;
+  border-radius: 50%;
+  font-size: 22px;
+  user-select: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+  <div id="hud">❤️❤️❤️</div>
+  <div id="player">👧</div>
+  <div id="emre">🧍‍♂️💙</div>
+
+  <div id="controls">
+    <div class="btn" id="left">⬅️</div>
+    <div class="btn" id="jump">⬆️</div>
+    <div class="btn" id="right">➡️</div>
+  </div>
+</div>
+
+<audio id="ice" src="https://www.soundjay.com/nature/ice-crack-01.mp3"></audio>
+<audio id="bg" src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Joshua_Eskridge/Joshua_Eskridge_-_Epilogue.mp3" loop></audio>
+
+<script>
+const player = document.getElementById("player");
+const hud = document.getElementById("hud");
+const ice = document.getElementById("ice");
+const bg = document.getElementById("bg");
+
+let x = 40;
+let y = 120;
+let velocityY = 0;
+let onGround = true;
+let lives = 3;
+let falling = false;
+
+function update() {
+  velocityY -= 1.5;
+  y += velocityY;
+
+  if (y <= 120) {
+    y = 120;
+    velocityY = 0;
+    onGround = true;
+  }
+
+  player.style.left = x + "px";
+  player.style.bottom = y + "px";
+
+  // rastgele buz kırılması
+  if (!falling && Math.random() < 0.002) {
+    fall();
+  }
+
+  // kazanma
+  if (x > window.innerWidth - 120) {
+    alert("🎉 Naz buzları geçti! Emre hep kıyıda 💙");
+    location.reload();
+  }
+
+  requestAnimationFrame(update);
+}
+
+function moveLeft() {
+  if (!falling) x -= 20;
+}
+
+function moveRight() {
+  if (!falling) x += 20;
+}
+
+function jump() {
+  if (onGround && !falling) {
+    velocityY = 25;
+    onGround = false;
+  }
+}
+
+function fall() {
+  falling = true;
+  ice.play();
+  let drop = setInterval(() => {
+    y -= 20;
+    if (y < -100) {
+      clearInterval(drop);
+      loseLife();
+    }
+  }, 30);
+}
+
+function loseLife() {
+  lives--;
+  hud.innerHTML = "❤️".repeat(lives);
+
+  if (lives > 0) {
+    setTimeout(() => {
+      x = 40;
+      y = 120;
+      falling = false;
+    }, 800);
+  } else {
+    alert("❄️ Naz düştü… ama Emre’nin kalbi hep oradaydı 💙");
+    location.reload();
+  }
+}
+
+// Dokunmatik
+document.getElementById("left").ontouchstart = moveLeft;
+document.getElementById("right").ontouchstart = moveRight;
+document.getElementById("jump").ontouchstart = jump;
+
+// Klavye
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") moveLeft();
+  if (e.key === "ArrowRight") moveRight();
+  if (e.key === "ArrowUp") jump();
+});
+
+// Müziği başlat
+document.body.addEventListener("click", () => bg.play(), { once: true });
+
+update();
+</script>
+
+</body>
+</html>
