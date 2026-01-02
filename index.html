@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Naz & Buz Denizi</title>
+<title>Naz Buzdan Geçiyor</title>
+
 <style>
 body {
   margin: 0;
-  overflow: hidden;
   background: linear-gradient(#b0e0ff, #ffffff);
+  overflow: hidden;
   font-family: Arial, sans-serif;
 }
 
@@ -20,24 +21,25 @@ body {
 
 .player {
   position: absolute;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   text-align: center;
-  line-height: 42px;
+  line-height: 44px;
   font-size: 14px;
   font-weight: bold;
 }
 
 #naz {
   background: pink;
-  left: 20px;
+  left: 40px;
+  top: 60%;
 }
 
 #sen {
   background: lightblue;
-  right: 20px;
-  bottom: 40%;
+  right: 40px;
+  top: 60%;
 }
 
 .ice {
@@ -46,33 +48,23 @@ body {
   height: 22px;
   background: #e0f7fa;
   border-radius: 12px;
-}
-
-.breaking {
-  background: #b2ebf2;
+  bottom: 40%;
 }
 
 #hud {
   position: absolute;
   top: 10px;
   left: 10px;
-  color: #01579b;
-  font-weight: bold;
+  font-size: 20px;
 }
 
-.heart {
-  position: absolute;
-  font-size: 24px;
-  transition: all 1s linear;
-}
-
-#message {
+#msg {
   position: absolute;
   bottom: 20px;
   width: 100%;
   text-align: center;
-  color: #c2185b;
   font-weight: bold;
+  color: #c2185b;
 }
 </style>
 </head>
@@ -80,7 +72,7 @@ body {
 <body>
 <div id="game">
   <div id="hud">❤️❤️❤️</div>
-  <div id="message"></div>
+  <div id="msg">Dokun → Naz ileri atlasın</div>
   <div id="naz" class="player">Naz</div>
   <div id="sen" class="player">Sen</div>
 </div>
@@ -89,115 +81,55 @@ body {
 const game = document.getElementById("game");
 const naz = document.getElementById("naz");
 const hud = document.getElementById("hud");
-const message = document.getElementById("message");
+const msg = document.getElementById("msg");
 
-let y = window.innerHeight * 0.6;
-let velocity = 0;
-let gravity = 1.2;
 let lives = 3;
-let iceBlocks = [];
-
-const romanticTexts = [
-  "Düşsen bile ben buradayım ❤️",
-  "Kalbim seni ayakta tutar",
-  "Naz, seni hiçbir buz ayıramaz",
-  "Aşk buzdan güçlüdür ❄️❤️"
-];
+let index = 0;
+let iceX = 120;
 
 function createIce() {
   const ice = document.createElement("div");
   ice.className = "ice";
-  ice.style.left = window.innerWidth + "px";
-  ice.style.top = (window.innerHeight * 0.65 + Math.random() * 120) + "px";
-  ice.breaks = Math.random() < 0.4;
-  if (ice.breaks) ice.classList.add("breaking");
+  ice.style.left = iceX + "px";
   game.appendChild(ice);
-  iceBlocks.push(ice);
+  iceX += 140;
+  return ice;
 }
 
-setInterval(createIce, 1700);
+let ices = [];
+for (let i = 0; i < 6; i++) {
+  ices.push(createIce());
+}
 
-function sendHeart() {
-  const heart = document.createElement("div");
-  heart.className = "heart";
-  heart.innerText = "❤️";
-  heart.style.left = (window.innerWidth - 60) + "px";
-  heart.style.top = (window.innerHeight * 0.4) + "px";
-  game.appendChild(heart);
+function moveNaz() {
+  const targetIce = ices[index + 1];
+  if (!targetIce) return;
 
-  setTimeout(() => {
-    heart.style.left = "40px";
-    heart.style.top = y + "px";
-  }, 50);
+  if (Math.random() < 0.3) {
+    loseLife();
+    return;
+  }
 
-  setTimeout(() => heart.remove(), 1200);
+  index++;
+  naz.style.left = targetIce.offsetLeft + "px";
+
+  if (index === ices.length - 1) {
+    msg.innerText = "Naz bana ulaştı ❤️";
+  }
 }
 
 function loseLife() {
   lives--;
   hud.innerText = "❤️".repeat(lives);
-  message.innerText = romanticTexts[Math.floor(Math.random() * romanticTexts.length)];
-  sendHeart();
-  y = window.innerHeight * 0.6;
-  velocity = 0;
-}
+  msg.innerText = "Kalbim seni yine ayağa kaldırdı ❤️";
 
-function gameLoop() {
-  velocity += gravity;
-  y += velocity;
-
-  let onIce = false;
-
-  iceBlocks.forEach((ice, i) => {
-    ice.style.left = (ice.offsetLeft - 2.5) + "px";
-
-    if (
-      ice.offsetLeft < naz.offsetLeft + 42 &&
-      ice.offsetLeft + 90 > naz.offsetLeft &&
-      y + 42 >= ice.offsetTop &&
-      y + 42 <= ice.offsetTop + 12 &&
-      velocity >= 0
-    ) {
-      onIce = true;
-      velocity = 0;
-      y = ice.offsetTop - 42;
-
-      if (ice.breaks) {
-        setTimeout(() => {
-          ice.remove();
-          iceBlocks.splice(i, 1);
-        }, 500);
-      }
-    }
-
-    if (ice.offsetLeft < -120) {
-      ice.remove();
-      iceBlocks.splice(i, 1);
-    }
-  });
-
-  if (!onIce && y > window.innerHeight) {
-    if (lives > 1) {
-      loseLife();
-    } else {
-      alert("Naz’a ulaşamadın ama aşk kazandı ❤️");
-      location.reload();
-    }
+  if (lives <= 0) {
+    msg.innerText = "Aşk kazandı ❤️";
   }
-
-  naz.style.top = y + "px";
-  requestAnimationFrame(gameLoop);
 }
 
-document.addEventListener("touchstart", () => {
-  if (velocity === 0) velocity = -18;
-});
-
-document.addEventListener("click", () => {
-  if (velocity === 0) velocity = -18;
-});
-
-gameLoop();
+document.addEventListener("touchstart", moveNaz);
+document.addEventListener("click", moveNaz);
 </script>
 </body>
 </html>
