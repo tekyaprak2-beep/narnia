@@ -2,107 +2,202 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Naz – Narnia Buzları</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naz & Buz Denizi</title>
 <style>
 body {
   margin: 0;
-  background: black;
   overflow: hidden;
-  font-family: Arial;
-  color: white;
+  background: linear-gradient(#b0e0ff, #ffffff);
+  font-family: Arial, sans-serif;
 }
-#start {
+
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.player {
   position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  z-index: 10;
-  cursor: pointer;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 42px;
+  font-size: 14px;
+  font-weight: bold;
 }
-canvas { display:block; margin:auto; }
+
+#naz {
+  background: pink;
+  left: 20px;
+}
+
+#sen {
+  background: lightblue;
+  right: 20px;
+  bottom: 40%;
+}
+
+.ice {
+  position: absolute;
+  width: 90px;
+  height: 22px;
+  background: #e0f7fa;
+  border-radius: 12px;
+}
+
+.breaking {
+  background: #b2ebf2;
+}
+
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: #01579b;
+  font-weight: bold;
+}
+
+.heart {
+  position: absolute;
+  font-size: 24px;
+  transition: all 1s linear;
+}
+
+#message {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  color: #c2185b;
+  font-weight: bold;
+}
 </style>
 </head>
-<body>
 
-<div id="start">
-  <h1>❄️ Naz Narnia Buzlarında ❄️</h1>
-  <p>Tıkla → Ok tuşlarıyla ilerle</p>
-  <p>❤️ 3 Can | 💖 Sen kıyıdasın</p>
+<body>
+<div id="game">
+  <div id="hud">❤️❤️❤️</div>
+  <div id="message"></div>
+  <div id="naz" class="player">Naz</div>
+  <div id="sen" class="player">Sen</div>
 </div>
 
-<canvas id="game" width="900" height="400"></canvas>
-
-<audio id="ice" src="https://cdn.pixabay.com/audio/2022/03/15/audio_5f3c8d7e9f.mp3"></audio>
-<audio id="bg" src="https://cdn.pixabay.com/audio/2022/10/25/audio_8d8c89c9d6.mp3" loop></audio>
-
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const start = document.getElementById("start");
-const bg = document.getElementById("bg");
-const ice = document.getElementById("ice");
+const game = document.getElementById("game");
+const naz = document.getElementById("naz");
+const hud = document.getElementById("hud");
+const message = document.getElementById("message");
 
-let started = false;
-let naz = {x:50,y:260,w:30,h:30};
-let speed = 6;
+let y = window.innerHeight * 0.6;
+let velocity = 0;
+let gravity = 1.2;
 let lives = 3;
+let iceBlocks = [];
 
-start.onclick = () => {
-  started = true;
-  start.style.display = "none";
-  bg.play();
-};
+const romanticTexts = [
+  "Düşsen bile ben buradayım ❤️",
+  "Kalbim seni ayakta tutar",
+  "Naz, seni hiçbir buz ayıramaz",
+  "Aşk buzdan güçlüdür ❄️❤️"
+];
 
-document.addEventListener("keydown", e=>{
-  if(!started) return;
-  if(e.key==="ArrowRight") naz.x += speed;
-  if(e.key==="ArrowLeft") naz.x -= speed;
+function createIce() {
+  const ice = document.createElement("div");
+  ice.className = "ice";
+  ice.style.left = window.innerWidth + "px";
+  ice.style.top = (window.innerHeight * 0.65 + Math.random() * 120) + "px";
+  ice.breaks = Math.random() < 0.4;
+  if (ice.breaks) ice.classList.add("breaking");
+  game.appendChild(ice);
+  iceBlocks.push(ice);
+}
+
+setInterval(createIce, 1700);
+
+function sendHeart() {
+  const heart = document.createElement("div");
+  heart.className = "heart";
+  heart.innerText = "❤️";
+  heart.style.left = (window.innerWidth - 60) + "px";
+  heart.style.top = (window.innerHeight * 0.4) + "px";
+  game.appendChild(heart);
+
+  setTimeout(() => {
+    heart.style.left = "40px";
+    heart.style.top = y + "px";
+  }, 50);
+
+  setTimeout(() => heart.remove(), 1200);
+}
+
+function loseLife() {
+  lives--;
+  hud.innerText = "❤️".repeat(lives);
+  message.innerText = romanticTexts[Math.floor(Math.random() * romanticTexts.length)];
+  sendHeart();
+  y = window.innerHeight * 0.6;
+  velocity = 0;
+}
+
+function gameLoop() {
+  velocity += gravity;
+  y += velocity;
+
+  let onIce = false;
+
+  iceBlocks.forEach((ice, i) => {
+    ice.style.left = (ice.offsetLeft - 2.5) + "px";
+
+    if (
+      ice.offsetLeft < naz.offsetLeft + 42 &&
+      ice.offsetLeft + 90 > naz.offsetLeft &&
+      y + 42 >= ice.offsetTop &&
+      y + 42 <= ice.offsetTop + 12 &&
+      velocity >= 0
+    ) {
+      onIce = true;
+      velocity = 0;
+      y = ice.offsetTop - 42;
+
+      if (ice.breaks) {
+        setTimeout(() => {
+          ice.remove();
+          iceBlocks.splice(i, 1);
+        }, 500);
+      }
+    }
+
+    if (ice.offsetLeft < -120) {
+      ice.remove();
+      iceBlocks.splice(i, 1);
+    }
+  });
+
+  if (!onIce && y > window.innerHeight) {
+    if (lives > 1) {
+      loseLife();
+    } else {
+      alert("Naz’a ulaşamadın ama aşk kazandı ❤️");
+      location.reload();
+    }
+  }
+
+  naz.style.top = y + "px";
+  requestAnimationFrame(gameLoop);
+}
+
+document.addEventListener("touchstart", () => {
+  if (velocity === 0) velocity = -18;
 });
 
-function drawIce(){
-  ctx.fillStyle="#bfefff";
-  for(let i=0;i<10;i++){
-    ctx.fillRect(i*90+40,300,60,20);
-  }
-}
+document.addEventListener("click", () => {
+  if (velocity === 0) velocity = -18;
+});
 
-function update(){
-  if(!started) return requestAnimationFrame(update);
-  ctx.clearRect(0,0,900,400);
-
-  drawIce();
-
-  // Naz
-  ctx.fillStyle="pink";
-  ctx.fillRect(naz.x,naz.y,naz.w,naz.h);
-  ctx.fillText("Naz",naz.x-5,naz.y-5);
-
-  // Sen (kıyıda)
-  ctx.fillStyle="red";
-  ctx.fillRect(840,250,30,60);
-  ctx.fillText("❤️",845,240);
-
-  // Düşme
-  if(naz.x>150 && naz.x<750 && Math.random()<0.005){
-    ice.play();
-    lives--;
-    naz.x=50;
-    alert(lives>0 ? "💖 Kalbin Naz’ı kurtardı!" : "💔 Oyun bitti");
-    if(lives<=0) location.reload();
-  }
-
-  // Kazanma
-  if(naz.x>820){
-    alert("🎉 Naz karşıya geçti! Aşk kazandı!");
-    location.reload();
-  }
-
-  requestAnimationFrame(update);
-}
-update();
+gameLoop();
 </script>
 </body>
 </html>
